@@ -7,7 +7,7 @@ import os
 app = Flask(__name__)
 
 client = OpenAI(
-    api_key="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",
+    api_key="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",
     base_url="https://openrouter.ai/api/v1",
     http_client=httpx.Client(verify=False)
 )

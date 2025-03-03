@@ -21,7 +21,7 @@ def extract_text_from_pdf(pdf_path):
 
 def get_recommendation(text, user_content):
     chat = client.chat.completions.create(
-        model="deepseek/deepseek-r1-distill-qwen-32b",
+        model="deepseek/deepseek-r1:free",
         messages=[
             {
                 "role": "user",

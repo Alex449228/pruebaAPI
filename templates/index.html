@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Postulantes</title>
+</head>
+<body>
+    <h1>Analizador de Postulantes</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label for="user_content">Ingresa el contenido personalizado para la IA:</label><br>
+        <textarea id="user_content" name="user_content" rows="5" cols="50"></textarea><br><br>
+        <label for="files">Sube los archivos PDF:</label><br>
+        <input type="file" id="files" name="files" multiple accept=".pdf"><br><br>
+        <button type="submit">Analizar</button>
+    </form>
+    <h2>Resultado del análisis:</h2>
+    <pre id="result"></pre>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch("/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("result").textContent = data.error;
+                } else {
+                    document.getElementById("result").textContent = data.recommendation;
+                }
+            })
+            .catch(error => {
+                document.getElementById("result").textContent = "Error al procesar la solicitud.";
+            });
+        });
+    </script>
+</body>
+</html>

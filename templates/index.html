@@ -4,39 +4,111 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador de Postulantes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            width: 90%;
+            max-width: 500px;
+            text-align: left;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin: 10px 0 5px;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #218838;
+        }
+        #loading {
+            display: none;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        #result {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
+
     <h1>Analizador de Postulantes</h1>
+
     <form id="uploadForm" enctype="multipart/form-data">
-        <label for="user_content">Ingresa el contenido personalizado para la IA:</label><br>
-        <textarea id="user_content" name="user_content" rows="5" cols="50"></textarea><br><br>
-        <label for="files">Sube los archivos PDF:</label><br>
-        <input type="file" id="files" name="files" multiple accept=".pdf"><br><br>
+        <label for="user_content">Ingresa el contenido personalizado para la IA:</label>
+        <textarea id="user_content" name="user_content" rows="4" placeholder="Ejemplo: Busca habilidades en programación..."></textarea>
+
+        <label for="files">Sube los archivos PDF:</label>
+        <input type="file" id="files" name="files" multiple accept=".pdf">
+
         <button type="submit">Analizar</button>
+        <p id="loading">Procesando... Por favor, espera.</p>
     </form>
+
     <h2>Resultado del análisis:</h2>
-    <pre id="result"></pre>
+    <div id="result">Esperando análisis...</div>
 
     <script>
         document.getElementById("uploadForm").addEventListener("submit", function (e) {
             e.preventDefault();
+            
             const formData = new FormData(this);
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("result").textContent = "Esperando análisis...";
+
             fetch("/", {
                 method: "POST",
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
+                document.getElementById("loading").style.display = "none";
                 if (data.error) {
-                    document.getElementById("result").textContent = data.error;
+                    document.getElementById("result").textContent = "❌ " + data.error;
                 } else {
-                    document.getElementById("result").textContent = data.recommendation;
+                    document.getElementById("result").textContent = "✅ " + data.recommendation;
                 }
             })
             .catch(error => {
-                document.getElementById("result").textContent = "Error al procesar la solicitud.";
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("result").textContent = "❌ Error al procesar la solicitud.";
             });
         });
     </script>
+
 </body>
 </html>

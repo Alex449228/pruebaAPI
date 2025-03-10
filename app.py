@@ -1,35 +1,43 @@
 from flask import Flask, render_template, request, jsonify
 from PyPDF2 import PdfReader
-from openai import OpenAI
-import httpx
-import os
+from transformers import pipeline
+import re
+import ssl
+import certifi
+
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
 app = Flask(__name__)
 
-client = OpenAI(
-    api_key="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",
-    base_url="https://openrouter.ai/api/v1",
-    http_client=httpx.Client(verify=False)
-)
+# Cargamos un modelo local de generación de texto (GPT-2 reducido)
+text_generator = pipeline("text-generation", model="distilgpt2")
 
-def extract_text_from_pdf(pdf_path):
-    reader = PdfReader(pdf_path)
+def extract_text_from_pdf(pdf_file):
+    """Extrae y limpia el texto de un PDF."""
+    reader = PdfReader(pdf_file)
     text = ''
     for page in reader.pages:
-        text += page.extract_text()
+        extracted_text = page.extract_text()
+        if extracted_text:
+            text += extracted_text + " "
+    
+    # Limpieza del texto: eliminar caracteres raros y espacios extras
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def get_recommendation(text, user_content):
-    chat = client.chat.completions.create(
-        model="deepseek/deepseek-r1:free",
-        messages=[
-            {
-                "role": "user",
-                "content": f"{user_content}\n\n{text}"
-            }
-        ]
-    )
-    return chat.choices[0].message.content
+def generate_ai_response(text, user_content):
+    """Genera una respuesta usando GPT-2 basado en la consulta y el contenido del PDF."""
+    prompt = f"Usuario: {user_content}\nDocumento: {text}\nRespuesta:"
+    
+    # Generar respuesta con el modelo local
+    response = text_generator(prompt, max_length=100, num_return_sequences=1)[0]["generated_text"]
+    
+    # Limpiar la respuesta para que no repita el prompt completo
+    response = response.replace(prompt, "").strip()
+    
+    return response
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -43,9 +51,9 @@ def index():
         combined_text = ""
         for file in files:
             text = extract_text_from_pdf(file)
-            combined_text += f"--- Contenido de {file.filename} ---\n{text}\n\n"
-        
-        recommendation = get_recommendation(combined_text, user_content)
+            combined_text += f"{text} "
+
+        recommendation = generate_ai_response(combined_text, user_content)
         return jsonify({"recommendation": recommendation})
     
     return render_template("index.html")
